@@ -94,3 +94,15 @@ def thres(n):
         thres[i] = thres[i-1] + np.random.exponential(n/(n-i-1), 1)[0]
         
     return thres
+
+def dpow(MM, k):
+    return (np.sum(MM[:,1]**k)-np.sum(MM[:,0]**k))/k
+
+def meanC(MM):
+    return dpow(MM,2)/dpow(MM,1)
+    
+def varC(MM):
+    return dpow(MM,3)/dpow(MM,1)-meanC(MM)**2
+
+def sdC(MM):
+    return varC(MM)**(1/2)
