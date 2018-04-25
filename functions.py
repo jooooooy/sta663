@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from scipy.stats import norm, gamma, poisson
+import operator
 
 def bernSIR(n, beta, gamma, p):
     t, count = 0, 0
