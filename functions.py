@@ -191,8 +191,8 @@ def PCOUP_SMC(Xdata, epss, k, run, OX):
     
     while jj<run:
         simcount+=1
-        LA = np.random.choice(cox, 1, p = OX[:,3], replace = True)
-        lambda_L = np.random.normal(OX[LA-1, 2], sL, 1)
+        LA = np.random.choice(cox, 1, p = OX[:,3], replace = True)[0]
+        lambda_L = np.random.normal(OX[LA-1, 2], sL, 1)[0]
         if lambda_L>0:
             J=House_COUP(Xdata,epss[1],lambda_L,k) # Run coupled simulations
             W = J[J[:,3]<J[:, 4],:]# W contains successful simulations (infect close to xA individuals)
