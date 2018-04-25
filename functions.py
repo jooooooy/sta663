@@ -208,3 +208,28 @@ def PCOUP_SMC(Xdata, epss, k, run, OX):
             
         
     return {'OUTPUT':OUTPUT[0:count,:], 'simcount':simcount}
+
+
+def PCOUP(Xdata, epss, k, run):
+    """Partially coupled ABC algorithm to obtain run accepted values."""
+     #initialize empty zero array
+    output = np.zeros(((2*epss[1]+1)*run, 5))
+    simcount=0
+    count=0
+    jj=0
+    
+    while jj<run:
+        simcount+=1
+        lambda_L = np.random.exponential(1,1) # Sample lambda_L
+        J = House_COUP(Xdata,epss[1],lambda_L,k) # Run coupled simulations
+        W = J[J[:,3]<J[:,4],:]        # W contains successful simulations (infect close to xA individuals)
+        if W.shape[1] == 5:
+            W = np.array(W).reshape(1, 5)
+        if W[:,0].shape[0]>0:
+                if np.amin(W, axis = 0)[1] <=epss[0]:
+                    jj+=1
+                    OUTPUT[count-1,:] = reduce(operator.concat, [W[ii, 1:4], lambda_L]) 
+                
+    # Stores values from simulation - these include closeness of simulated epidemic 
+    # to data, range of lambda_G values and lambda_L
+    return {'OUTPUT':OUTPUT[0:count,:], 'simcount':simcount}
