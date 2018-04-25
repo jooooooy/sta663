@@ -242,3 +242,46 @@ def Mexp(k,Lambda,U,a,b):
         U+=a**k*math.exp(-Lambda*a)-b**k*math.exp(-Lambda*b)+k/Lambda*Mexp((k-1), Lambda, U, a, b)
         
     return U
+
+def House_imp(Xdata,epsil,k,run,OX):
+    """Code for running ABC for households with importance sampling"""
+    OUTPUT = np.zeros((run, 3))
+    hs = np.sum(Xdata, axis = 0)
+    isB = np.sum(Xdata, axis = 1)
+    rowB = np.arange(hs.shape[0]+1)
+    xB = np.sum(np.multiply(isB, rowB))
+    
+    simcount, j = 0, 0
+    #Compute variances for the pertubations. Bivariate Gaussian
+    meanG = np.sum(np.multiply(OX[:,0], OX[:,2]))/np.sum(OX[:,2])    
+    meanL = np.sum(np.multiply(OX[:,1], OX[:,2]))/np.sum(OX[:,2])
+    vG = np.sum(np.multiply(OX[:,0]**2, OX[:,2]))/np.sum(OX[:,2]) - meanG**2
+    vL = np.sum(np.multiply(OX[:,0]**2, OX[:,2]))/np.sum(OX[:,2]) - meanL**2
+    vLG = np.sum(OX[:,0]*OX[:,1]*OX[:,2])/np.sum(OX[:,2]) - meanG*meanL
+    vaR = 2*np.array([vG, vLG, vLG, vL]).reshape((2,2)).T
+    Sinv = np.linalg.inv(vaR)
+    sG = math.sqrt(2*vG)
+    sLL = math.sqrt(vL-vLG**2/vG)
+    sAL = vLG/vG
+    
+    while j<run:
+        simcount+=1
+        LA = np.random.choice(run, 1, p = OX[:,2], replace = True)[0]
+        lambda_G = np.random.norm(OX[LA-1, 0], sG, 1)[0]
+        lambda_L = np.random.norm((OX[LA-1, 1]+sAL*(lambda_G-OX[LA-1, 0])), sLL, 1)[0]
+        
+        if lambda_G>0 and lambda_L>0:
+            J = House_SEL(hs,lambda_G,lambda_L,k)
+            if np.sum(abs(J-Xdata))<=epsil[1]:
+                j+=1
+                weiZ = 0
+                for i in range(run):
+                    xDIF = np.array([lambda_G, lambda_L])-OX[LA-1, 0:2]
+                    mult = xDIF.T @ Sinv @ xDIF
+                    weiZ+=np.exp(-mult[0, 0]/2)
+            weiG = math.exp(-1*(lambda_L+lambda_G))/weiZ
+            OUTPUT[j-1,:] = [lambda_G,lambda_L,weiG]
+    
+    return {'OUTPUT':OUTPUT, 'simcount':simcount}
+
+                
