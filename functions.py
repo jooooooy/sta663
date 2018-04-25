@@ -233,3 +233,12 @@ def PCOUP(Xdata, epss, k, run):
     # Stores values from simulation - these include closeness of simulated epidemic 
     # to data, range of lambda_G values and lambda_L
     return {'OUTPUT':OUTPUT[0:count,:], 'simcount':simcount}
+
+def Mexp(k,Lambda,U,a,b):
+    """Moment calculator for Exp(\lambda) prior."""
+    if k == 0:
+        U+=math.exp(-a*Lambda)-math.exp(-Lambda*b)
+    if k>0:
+        U+=a**k*math.exp(-Lambda*a)-b**k*math.exp(-Lambda*b)+k/Lambda*Mexp((k-1), Lambda, U, a, b)
+        
+    return U
