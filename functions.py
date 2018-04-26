@@ -437,5 +437,30 @@ def binning2d(x, y, breaks, nbins):
         means = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2]).mean()
         devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2]).var()
     
-    return {'x': x, 'x.freq': x.f, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'devs': devs}
+    return {'x': X, 'x.freq': X.f, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'devs': devs}
         
+def expand_grid(dictionary):
+    return pd.DataFrame([row for row in product(*dictionary.values())], 
+                        columns=dictionary.keys())
+
+def binning3d(x, y, breaks, nbins):
+    f1 = pd.cut(x[:, 0], breaks[:, 0], retbins = True)
+    f2 = pd.cut(x[:, 1], breaks[:, 1], retbins = True)
+    f3 = pd.cut(x[:, 2], breaks[:, 2], retbins = True)
+    freq1 = pd.cut(x[:, 0], breaks[:, 0], labels = False)
+    freq2 = pd.cut(x[:, 1], breaks[:, 1], labels = False)
+    freq3 = pd.cut(x[:, 2], breaks[:, 2], labels = False)
+    freq = pd.crosstab(f1, [f2, f3])
+    midpoints = (breaks[1:, :] + np.delete(breaks, nbins, axis = 0))/2
+    z1 = midpoints[:, 0]
+    z2 = midpoints[:, 1]
+    z3 = midpoints[:, 2]
+    X = expand_grid({'z1': z1, 'z2':z2, 'z3':z3})
+    X.f = freq.values.ravel()
+    ID = (X.f > 0)
+    X = X[ID, :]
+    if not all(np.isnan(y)):
+        means = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2, f3]).mean()
+        devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2, f3]).var()
+        
+    return {'x': X, 'x.freq': X.f, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'devs': devs}
