@@ -399,3 +399,22 @@ def epigamma(n, m, run, k):
             output[count-1, :] = np.array([q, y[m-1]])
             
     return output[0:count,:]
+
+def binning1d(x, y, breaks, nbins):
+    """binning functions"""
+    
+    f = pd.cut(x, breaks, retbins = True)
+    if any(f.isnull()):
+        sys.exit('breaks do not span the range of x')
+        
+    freq = pd.cut(x, breaks, labels = False)
+    midpoints = (breaks[1:] + np.delete(breaks, nbins))/2
+    x = midpoints[freq > 0]
+    x.freq = freq[freq > 0]
+    if !all(np.isnan(y)):
+        means = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).mean()
+        sums = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).sum()
+        devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).var()
+    
+    return {'x': x, 'x.freq': x.freq, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'sums': sums, 'devs': devs}
+        
