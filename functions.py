@@ -4,6 +4,7 @@ from scipy.stats import norm, gamma, poisson
 import operator
 import pandas as pd
 import sys
+from functools import reduce
 
 def bernSIR(n, beta, gamma, p):
     t, count = 0, 0
