@@ -465,3 +465,49 @@ def binning3d(x, y, breaks, nbins):
         devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2, f3]).var()
         
     return {'x': X, 'x.freq': X.f, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'devs': devs}
+
+def binning(x, y, breaks, nbins):
+    """Binning functions for 1-3D"""
+    if len(x.shape) > 0:
+        if len(x.shape)!=2:
+            sys.exit("wrong parameter x for binning")
+        ndim = x.shape[1]
+        if ndim > 3:
+            sys.exit("binning can be carried out only with 1-3 variables")
+        if y is None:
+            y = np.repeat(np.nan, x.shape[0])
+        if nbins is None:
+            nbins = round(math.log(x.shape[0])/math.log(2)+1)
+        if breaks is None:
+            breaks = np.hstack([np.arange(min(x[:, 0], max(x[:, 0]+1, nbins+1))).reshape((-1,1)), 
+                                    np.arange(min(x[:, 1], max(x[:, 1]+1, nbins+1))).reshape((-1,1))])
+            if ndim == 3:
+                breaks = np.hstack([breaks, np.arange(min(x[:, 2], max(x[:, 2]+1, nbins+1))).reshape((-1,1))])
+                breaks[0,:] = breaks[0,:] - np.repeat(10**-5, breaks.shape[1]) 
+        else:
+            nbins = breaks.shape[0]-1
+        if np.isnan(max(abs(breaks))) or max(abs(breaks)) is None:
+            sys.exit("illegal breaks")
+            
+        if ndim == 2:
+            result = binning2d(x, y, breaks = breaks, nbins = nbins)
+        else:
+            result = binning3d(x, y, breaks = breaks, nbins = nbins)
+            
+    else:
+        x = x.ravel()
+        if y is None:
+            y = np.repeat(np.nan, len(x))
+        if nbins is None:
+            nbins = round(math.log(x.shape[0])/math.log(2)+1)
+            breaks[0] = breaks[0] - 10**-5
+        else:
+            nbins = len(breaks) - 1
+        if np.isnan(max(abs(breaks))) or max(abs(breaks)) is None:
+            sys.exit("illegal breaks")
+            
+        result = binning1d(x, y, breaks = breaks, nbins = nbins)
+    
+    return result
+            
+            
