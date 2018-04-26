@@ -5,6 +5,7 @@ import operator
 import pandas as pd
 import sys
 from functools import reduce
+from itertools import product
 
 def bernSIR(n, beta, gamma, p):
     t, count = 0, 0
