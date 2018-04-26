@@ -285,3 +285,76 @@ def House_imp(Xdata,epsil,k,run,OX):
     return {'OUTPUT':OUTPUT, 'simcount':simcount}
 
                 
+def House_COUP(Xdata,epsil,lambda_L,k):
+    """Partially coupled ABC algorithm for household epidemics
+    lambda_L is drawn from the prior (or however)
+    Code finds lambda_G values consistent with the data
+    Input: Xdata - Epidemic data to compare simulations with.
+    epsil - Max distance between simulated and observed final size for a simulation 
+    to be accepted. (Tighter control on distance after simulations straightforward).
+    lambda_L - local infection (household) rate
+    k - Gamma(k,k) infectious period with k=0 a constant infectious period."""
+    hsA = np.sum(Xdata, axis = 0) # hsA[i] - Number of households of size i
+    isA = np.sum(Xdata, axis = 1) # isA[i] - Number of households with i-1 infectives
+    colA = np.arange(1, hsA.shape[0]+1)
+    rowA = np.arange(0, hsA.shape[0]+1)
+    
+    xA = np.sum(isA*rowA) # Final size
+    HH = hsA.shape[0] # HH maximum household size
+    ks = np.arange(1, HH+1)
+    
+    n = np.repeat(ks, hsA, axis=0)
+    m = n.shape[0]# Number of households
+    N = np.sum(n) # Population size
+    NS = N # Number of susceptibles
+    sev=0       # Running tally of severity (sum of infectious periods)
+    threshold=0 # Running tally of (global) threshold required for the next infection
+    
+    ni = np.repeat(0, n.shape[0], axis = 0) # infectives (per household)
+    ns=n # susceptibles (per household)
+    
+    OUT = np.zeros((HH+1, HH))
+    OUT[0, :] = hsA # Epidemic data in the same form as Xdata
+                   # Start with everybody susceptible
+    
+    DISS = np.zeros((2*epsil+1, 5)) # Matrix for collecting epidemics infecting within epsil of xA infectives.
+    SEVI = np.zeros((N, 3)) # Matrix to keep track of number of infectives, severity and threshold.
+    ys=0    # number of infectives
+    count=0 # number of global infections taking place. First global infection is the introductory case. 
+    
+    while ys<=(xA+epsil):
+        # Only need to consider the epidemic until xA+epsil infections occur.
+        # We simulate successive global infections (should they occur) with associated
+        # local (within household epidemics)
+        # For the count+1 global infection to take place, we require that 
+        # for k=1,2,..., count;  lambda_G * severity from first k infectives is larger
+        # than the k^th threshold
+        count+=1
+        kk = np.random.choice(m, 1, p = ns/ns.sum(), replace = True)[0]
+        OUT[ni[kk-1],n[kk-1]-1]=OUT[ni[kk-1],n[kk-1]-1]-1
+        hou_epi=House_epi(ns[kk-1],k,lambda_L)# Simulate a household epidemic among the remaining susceptibles in the household
+        
+        ns[kk-1]-=hou_epi[0]
+        ni[kk-1]-=ns[kk-1]#update household kk data (susceptibles and infectives)
+        
+        OUT[ni[kk-1],n[kk-1]-1]+=1# Update the state of the population following the global 
+        #infection and resulting household epidemic
+        NS = ns.sum()
+        threshold+=np.random.exponential(1, (N/NS))
+        
+        ys+=hou_epi[0]
+        sev+=hou_epi[1]
+        SEVI[count-1,:] = [ys,sev,threshold]
+        # If the number infected is close to xA, we check what value of lambda_G 
+        # would be needed for an epidemic of the desired size. 
+        # Note that in many cases no value of lambda_G will result in an epidemic 
+        # close to xA. 
+        if abs(ys-xA)<=epsil:
+            dist = np.sum(abs(OUT-Xdata))
+            TT = SEVI[0:count, 2]/SEVI[0:count, 1] #ratio of threshold to severity
+            Tlow = TT[0:(count-1)].max()
+            Thi=TT[0:count].max()   #  Thi is the maximum lambda_G which leads to at most count global infections
+            DISS[(ys-(xA-epsil)), :] = [1,dist,abs(ys-xA),Tlow,Thi]
+            
+    return DISS
+            
