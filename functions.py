@@ -147,11 +147,11 @@ def epigammaF(n, m, run, k):
         if k == 0:
             q = np.repeat(1, n)
         y = []
-        for i in range(n-1):
-            y.append(t[i]/np.sum(q[0:(i-1)]))
-        q = np.nanmax(y[0:(m-1)])
+        for i in range(1, n):
+            y.append(t[i-1]/np.sum(q[0:i]))
+        q = max(y[0:(m-1)])
         if q<y[m-1]:           
-            output[j,] = np.array([q, y[m-1]])
+            output[j,:] = np.array([q, y[m-1]])
             j+=1
         
     return output
