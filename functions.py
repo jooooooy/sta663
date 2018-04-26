@@ -3,6 +3,7 @@ import math
 from scipy.stats import norm, gamma, poisson
 import operator
 import pandas as pd
+import sys
 
 def bernSIR(n, beta, gamma, p):
     t, count = 0, 0
