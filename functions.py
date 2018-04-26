@@ -412,7 +412,7 @@ def binning1d(x, y, breaks, nbins):
     midpoints = (breaks[1:] + np.delete(breaks, nbins))/2
     x = midpoints[freq > 0]
     x.freq = freq[freq > 0]
-    if !all(np.isnan(y)):
+    if not all(np.isnan(y)):
         means = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).mean()
         sums = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).sum()
         devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f]).var()
