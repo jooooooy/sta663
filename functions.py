@@ -419,3 +419,23 @@ def binning1d(x, y, breaks, nbins):
     
     return {'x': x, 'x.freq': x.freq, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'sums': sums, 'devs': devs}
         
+def binning2d(x, y, breaks, nbins):
+    f1 = pd.cut(x[:, 0], breaks[:, 0], retbins = True)
+    f2 = pd.cut(x[:, 1], breaks[:, 1], retbins = True)
+    freq1 =  pd.cut(x[:, 0], breaks[:, 0], labels = False)
+    freq2 = pd.cut(x[:, 1], breaks[:, 1], labels = False)
+    freq = pd.crosstab(freq2, freq1)
+    midpoints = (breaks[1:, :] + np.delete(breaks, nbins, axis = 0))/2
+    z1 = midpoints[:, 0]
+    z2 = midpoints[:, 1]
+    X = reduce(operator.concat, [np.repeat(z1, z2.shape[0]), np.repeat(z2, np.repeat(z1.shape[0], z2.shape[0]))]) 
+    X.f = freq.T.values.ravel()
+    ID = X.f > 0
+    X = X[ID, :]
+    X.f = X.f[ID]
+    if not all(np.isnan(y)):
+        means = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2]).mean()
+        devs = pd.DataFrame({'x': x, 'y': y})['y'].groupby([f1, f2]).var()
+    
+    return {'x': x, 'x.freq': x.f, 'table.freq' = freq, 'breaks': breaks, 'means': means, 'devs': devs}
+        
