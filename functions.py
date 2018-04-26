@@ -377,3 +377,23 @@ def epidemic(n, m, run):
             output[count-1,:] = [q, y[m-1]]
    
     return output[0:count, :]
+
+def epigamma(n, m, run, k):
+    """Simulates epidemics with a Gamma(k,k) infectious period.
+    output gives the set of lambda parameters consistent with the data (m out of n infected)
+    Only successful simulations kept"""
+    output = np.zeros((run, 2), dtype = float)
+    count = 0
+    for j in range(run):
+        t = thres(n)
+        q = np.random.gamma(k, 1/k, n)
+        y = []
+        for i in range(1, n):
+            y.append(t[i-1]/np.sum(q[0:i]))
+            
+        q = max(y[0:(m-1)])
+        if q<y[m-1]:
+            count+=1
+            output[count-1, :] = np.array([q, y[m-1]])
+            
+    return output[0:count,:]
