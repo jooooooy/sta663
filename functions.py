@@ -191,7 +191,7 @@ def PCOUP_SMC(Xdata, epss, k, run, OX):
     
     while jj<run:
         simcount+=1
-        LA = np.random.choice(cox, 1, p = OX[:,3], replace = True)[0]
+        LA = np.random.choice(cox, 1, p = OX[:,3]/OX[:,3].sum(), replace = True)[0]
         lambda_L = np.random.normal(OX[LA-1, 2], sL, 1)[0]
         if lambda_L>0:
             J=House_COUP(Xdata,epss[1],lambda_L,k) # Run coupled simulations
@@ -266,7 +266,7 @@ def House_imp(Xdata,epsil,k,run,OX):
     
     while j<run:
         simcount+=1
-        LA = np.random.choice(run, 1, p = OX[:,2], replace = True)[0]
+        LA = np.random.choice(run, 1, p = OX[:,2]/OX[:,2].sum(), replace = True)[0]
         lambda_G = np.random.norm(OX[LA-1, 0], sG, 1)[0]
         lambda_L = np.random.norm((OX[LA-1, 1]+sAL*(lambda_G-OX[LA-1, 0])), sLL, 1)[0]
         
