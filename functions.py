@@ -358,3 +358,22 @@ def House_COUP(Xdata,epsil,lambda_L,k):
             
     return DISS
             
+##################################
+# Coupled-ABC Homogeneously mixing SIR code
+###################################
+def epidemic(n, m, run):
+    """Simulates epidemics with a constant infectious period length 1.
+    output gives the set of lambda parameters consistent with the data (m out of n infected)
+    Only successful simulations kept """
+    output = np.zeros((run, 2))
+    ss = np.arange(1, n)
+    count = 0
+    for j in range(run):
+        t = thres(n)
+        y = t/ss
+        q = y[0:m-1].max()
+        if q<y[m-1]:
+            count+=1
+            output[count-1,:] = [q, y[m-1]]
+   
+    return output[0:count, :]
