@@ -83,7 +83,7 @@ def ABCimp(N, mstar, epsil, run, sampold, weightold):
     simcount, i = 0, 0
     # sampold and weightold are the lambda values and importance weight from the
     # previous run.
-    V=np.sum(sampold^2*weightold)/np.sum(weightold)-np.sum(sampold*weightold)^2/np.sum(weightold)^2
+    V=np.sum(sampold**2*weightold)/np.sum(weightold)-np.sum(sampold*weightold)**2/np.sum(weightold)**2
     ss=math.sqrt(2*V)
     while i<run:
         simcount+=1
