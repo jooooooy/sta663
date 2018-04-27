@@ -239,7 +239,7 @@ def PCOUP(Xdata, epss, k, run):
                         
     # Stores values from simulation - these include closeness of simulated epidemic 
     # to data, range of lambda_G values and lambda_L
-    return {'OUTPUT':OUTPUT[0:count,:], 'simcount':simcount}
+    return {'OUTPUT':output[0:count,:], 'simcount':simcount}
 
 
 def Mexp(k,Lambda,U,a,b):
