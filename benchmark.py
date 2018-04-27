@@ -1,3 +1,4 @@
+import time
 
 ########################################################################################
 # Code for implementing the Toni et al. alogrithm with predefined levels of
