@@ -78,8 +78,8 @@ def bernSIRC(n, beta, gamma, p, CUT):
 def ABCimp(N, mstar, epsil, run, sampold, weightold):
     """ABC importance sampling for a fixed number of accepted values.
     Use this in implementing the Toni et al. algorithm."""
-    samp = np.zeros(run)
-    weight = np.zeros(run)
+    samp = np.zeros(run, dtype = float)
+    weight = np.zeros(run, dtype = float)
     simcount, i = 0, 0
     # sampold and weightold are the lambda values and importance weight from the
     # previous run.
@@ -94,7 +94,7 @@ def ABCimp(N, mstar, epsil, run, sampold, weightold):
             if abs(m-mstar)<=epsil:
                 samp[i] = Lambda
                 # Computes the importance weight for the parameter based upon an Exp(1) prior.
-                weight[i] = np.exp(-1*Lambda)/np.sum(weightold*norm.pdf(Lambda,sampold,ss))
+                weight[i] = np.exp(-Lambda)/np.sum(weightold*norm.pdf(Lambda,sampold,ss))
                 i+=1
      
     return {'samp': samp, 'weight': weight, 'simcount': simcount}
