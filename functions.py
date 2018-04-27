@@ -510,7 +510,6 @@ def binning(x, y, breaks, nbins):
     
     return result
             
-# Process data
 def process(DATA):
     hsA = np.sum(DATA,axis=0)
     isA = np.sum(DATA,axis=1)
@@ -520,7 +519,7 @@ def process(DATA):
     xA = np.sum(isA*rowA) # Final size
     N = np.sum(hsA*colA) # Population size
     
-    return {'hsA' : hsA, 'isA' : isA, 'colA' : colA, 'rowA' : rowA, 'xA' : xA, 'N' : N}
+    return hsA, isA, colA, rowA, xA, N
 
 def House_SEL(hs, lambda_G, lambda_L, k):
     HH = hs.size
@@ -596,4 +595,45 @@ def House_van(Xdata,epsil,k,run):
                 OUTPUT[j-1,] = np.array([lambda_G,lambda_L]).reshape((1,2))
                 print(j,simcount)
                 
-    return {'OUTPUT': OUTPUT, 'simcount' : simcount}         
+    return {'OUTPUT': OUTPUT, 'simcount' : simcount}     
+
+def House_epi(n,k,lambda_L):
+    if n == 1:
+        i = 1
+        if k == 0:
+            sev = 1
+        if k > 0:
+            sev = np.random.gamma(k, 1/k, 1)
+    
+    if n > 1:
+        t = thresH(n)
+        if k == 0:
+            q = np.repeat(1.0,n)
+        if k > 0:
+            q = np.random.gamma(size=n, shape=k, scale=1/k)
+        t = np.append(t, 2*lambda_L*np.sum(q))
+        
+        i = 0
+        test = 0
+        while test == 0:
+            i += 1
+            if t[i-1] > (lambda_L*np.sum(q[0:i])):
+                test = 1 
+                sev = np.sum(q[0:i])
+                
+    return np.array([i,sev])
+
+# Code for setting (local) thresholds in a household of size n.
+# 
+# Note local thresholds not required for households of size 1.
+# Infection rate does not depend upon households size.
+#
+
+def thresH(n):
+    thres = np.repeat(0.0,n-1)
+    thres[0] = np.random.exponential(size=1,scale=1/(n-1))
+    if n > 2:
+        for i in range(1,n-1):
+            thres[i] = thres[i-1] + np.random.exponential(size=1, scale=1/(n-i))
+    
+    return thres
