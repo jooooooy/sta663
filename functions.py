@@ -510,4 +510,90 @@ def binning(x, y, breaks, nbins):
     
     return result
             
-            
+# Process data
+def process(DATA):
+    hsA = np.sum(DATA,axis=0)
+    isA = np.sum(DATA,axis=1)
+    colA = np.array(range(1,len(hsA)+1))
+    rowA = np.array(range(0,len(hsA)+1))
+    
+    xA = np.sum(isA*rowA) # Final size
+    N = np.sum(hsA*colA) # Population size
+    
+    return {'hsA' : hsA, 'isA' : isA, 'colA' : colA, 'rowA' : rowA, 'xA' : xA, 'N' : N}
+
+def House_SEL(hs, lambda_G, lambda_L, k):
+    HH = hs.size
+    ks = np.array(range(1,HH+1))
+
+    n = np.repeat(ks,hs)
+
+    m = n.size  # Number of households
+    N = n.sum() # Population size
+    NS = N
+
+    sev = 0
+    threshold = 0
+
+    ni = np.repeat(0,m)
+    ns = n.copy()
+
+    R = np.random.exponential(size=N)
+
+    while threshold <= lambda_G*sev:
+        kk = np.random.choice(a=np.arange(m)+1, size = 1, replace = True, p = ns/(ns.sum()))[0]
+        
+        hou_epi = House_epi(ns[kk-1],k,lambda_L)
+        ns[kk-1] = ns[kk-1] - hou_epi[0]
+        sev = sev + hou_epi[1]
+        
+        ni[kk-1] = n[kk-1]-ns[kk-1] 
+        #NS=NS-hou_epi[0]
+        NS=ns.sum()
+        
+        if NS > 0:
+            threshold = threshold + np.random.exponential(scale = NS/N, size=1)[0]
+        if NS == 0:
+            threshold = 2*lambda_G*sev
+        
+    OUT = np.zeros((HH+1,HH))
+    for i in range(1, HH+2):
+        for j in range(1,HH+1):
+            OUT[i-1,j-1] = sum(n[ni==(i-1)]==j)
+    
+    return OUT
+#
+# Code for running vanilla ABC for households
+#
+def House_van(Xdata,epsil,k,run):
+    """
+    Xdata - a data set
+    epsil - a numpy array of length 2
+    k - int
+    run - int
+    """
+    
+    OUTPUT = np.zeros((run,2))
+    hs = np.sum(Xdata,axis=0).astype('int')
+    isB = np.sum(Xdata,axis=1)
+    
+    rowB = np.arange(hs.size+1)
+    xB = sum(isB*rowB)
+    
+    simcount = 0
+    j = 0
+    
+    while j<run:
+        simcount = simcount+1
+        lambda_G = np.random.exponential(size=1)
+        lambda_L = np.random.exponential(size=1)
+        J = House_SEL(hs,lambda_G,lambda_L,k)
+        
+        if ((abs(J-Xdata)).sum()) <= epsil[0]:
+            isJ = np.sum(J, axis=1)
+            if abs(sum(isJ*rowB)-xB) <= epsil[1]:
+                j = j+1
+                OUTPUT[j-1,] = np.array([lambda_G,lambda_L]).reshape((1,2))
+                print(j,simcount)
+                
+    return {'OUTPUT': OUTPUT, 'simcount' : simcount}         
