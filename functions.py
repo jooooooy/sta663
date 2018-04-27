@@ -235,11 +235,13 @@ def PCOUP(Xdata, epss, k, run):
                 for ii in range(W[:, 0].size):
                     if W[ii, 1]<=epss[0]:
                         count+=1
-                        output[count-1,:]=np.r_[W[ii,1:4],lambda_L]
+                        output[count-1,:]=np.r_[W[ii,1:5], lambda_L]
+                        print(jj,count,simcount)
                         
     # Stores values from simulation - these include closeness of simulated epidemic 
     # to data, range of lambda_G values and lambda_L
     return {'OUTPUT':output[0:count,:], 'simcount':simcount}
+
 
 
 def Mexp(k,Lambda,U,a,b):
@@ -311,14 +313,14 @@ def House_COUP(Xdata,epsil,lambda_L,k):
     HH = hsA.shape[0] # HH maximum household size
     ks = np.arange(1, HH+1)
     
-    n = np.repeat(ks, hsA, axis=0)
+    n = np.repeat(ks, hsA)
     m = n.shape[0]# Number of households
     N = np.sum(n) # Population size
-    NS = N # Number of susceptibles
+    NS = N.copy() # Number of susceptibles
     sev=0       # Running tally of severity (sum of infectious periods)
     threshold=0 # Running tally of (global) threshold required for the next infection
     
-    ni = np.repeat(0, n.shape[0], axis = 0) # infectives (per household)
+    ni = np.repeat(0, n.size) # infectives (per household)
     ns = n.copy() # susceptibles (per household)
     
     OUT = np.zeros((HH+1, HH))
@@ -352,7 +354,8 @@ def House_COUP(Xdata,epsil,lambda_L,k):
         
         ys+=hou_epi[0]
         sev+=hou_epi[1]
-        SEVI[count-1,:] = [ys,sev,threshold]
+        if count<=N:
+            SEVI[count-1,:] = [ys,sev,threshold]
         # If the number infected is close to xA, we check what value of lambda_G 
         # would be needed for an epidemic of the desired size. 
         # Note that in many cases no value of lambda_G will result in an epidemic 
@@ -360,11 +363,12 @@ def House_COUP(Xdata,epsil,lambda_L,k):
         if abs(ys-xA)<=epsil:
             dist = np.sum(abs(OUT-Xdata))
             TT = SEVI[0:count, 2]/SEVI[0:count, 1] #ratio of threshold to severity
-            Tlow = max(TT[0:count])
+            Tlow = max(TT[0:(count-1)])
             Thi=TT[0:count].max()   #  Thi is the maximum lambda_G which leads to at most count global infections
-            DISS[(ys-(xA-epsil)).astype('int'), :] = [1,dist,abs(ys-xA),Tlow,Thi]
+            DISS[ys-(xA-epsil), :] = [1,dist,abs(ys-xA),Tlow,Thi]
             
     return DISS
+
             
 ##################################
 # Coupled-ABC Homogeneously mixing SIR code
@@ -555,7 +559,7 @@ def House_SEL(hs, lambda_G, lambda_L, k):
         NS=ns.sum()
         
         if NS > 0:
-            threshold = threshold + np.random.exponential(scale = NS/N, size=1)[0]
+            threshold = threshold + np.random.exponential(scale = N/NS, size=1)[0]
         if NS == 0:
             threshold = 2*lambda_G*sev
         
@@ -602,6 +606,10 @@ def House_van(Xdata,epsil,k,run):
     return {'OUTPUT': OUTPUT, 'simcount' : simcount}     
 
 def House_epi(n,k,lambda_L):
+    
+    i=0
+    sev=0
+    
     if n == 1:
         i = 1
         if k == 0:
@@ -625,8 +633,7 @@ def House_epi(n,k,lambda_L):
                 test = 1 
                 sev = np.sum(q[0:i])
                 
-    return np.array([i,sev])
-
+    return i, sev
 # Code for setting (local) thresholds in a household of size n.
 # 
 # Note local thresholds not required for households of size 1.
