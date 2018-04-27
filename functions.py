@@ -227,7 +227,7 @@ def PCOUP(Xdata, epss, k, run):
         lambda_L = np.random.exponential(1,1) # Sample lambda_L
         J = House_COUP(Xdata,epss[1],lambda_L,k) # Run coupled simulations
         W = J[J[:,3]<J[:,4],:]        # W contains successful simulations (infect close to xA individuals)
-        if W.shape[1] == 5:
+        if W.size == 5:
             W = np.array(W).reshape((-1, 5))
         if W[:,0].size > 0:
             if min(W[:, 1])<=epss[0]:
