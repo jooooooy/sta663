@@ -315,7 +315,7 @@ def House_COUP(Xdata,epsil,lambda_L,k):
     threshold=0 # Running tally of (global) threshold required for the next infection
     
     ni = np.repeat(0, n.shape[0], axis = 0) # infectives (per household)
-    ns=n # susceptibles (per household)
+    ns = n.copy() # susceptibles (per household)
     
     OUT = np.zeros((HH+1, HH))
     OUT[0, :] = hsA # Epidemic data in the same form as Xdata
@@ -339,12 +339,12 @@ def House_COUP(Xdata,epsil,lambda_L,k):
         hou_epi=House_epi(ns[kk-1],k,lambda_L)# Simulate a household epidemic among the remaining susceptibles in the household
         
         ns[kk-1]-=hou_epi[0]
-        ni[kk-1]-=ns[kk-1]#update household kk data (susceptibles and infectives)
+        ni[kk-1] = n[kk-1] - ns[kk-1]#update household kk data (susceptibles and infectives)
         
         OUT[ni[kk-1],n[kk-1]-1]+=1# Update the state of the population following the global 
         #infection and resulting household epidemic
         NS = ns.sum()
-        threshold+=np.random.exponential(1, (N/NS))
+        threshold+=np.random.exponential(size = 1, scale = (N/NS))
         
         ys+=hou_epi[0]
         sev+=hou_epi[1]
@@ -356,9 +356,9 @@ def House_COUP(Xdata,epsil,lambda_L,k):
         if abs(ys-xA)<=epsil:
             dist = np.sum(abs(OUT-Xdata))
             TT = SEVI[0:count, 2]/SEVI[0:count, 1] #ratio of threshold to severity
-            Tlow = TT[0:(count-1)].max()
+            Tlow = max(TT[0:count])
             Thi=TT[0:count].max()   #  Thi is the maximum lambda_G which leads to at most count global infections
-            DISS[(ys-(xA-epsil)), :] = [1,dist,abs(ys-xA),Tlow,Thi]
+            DISS[(ys-(xA-epsil)).astype('int'), :] = [1,dist,abs(ys-xA),Tlow,Thi]
             
     return DISS
             
