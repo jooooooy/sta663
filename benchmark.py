@@ -231,5 +231,42 @@ tendC-tstartC
 #####################################################################################################################
 #  ABC code for running vanilla ABC
 #####################################################################################################################
+tstartC = time.time()
 
+DATA=SeattleA
+
+
+proc = process(DATA)
+hsA, isA , colA, rowA,  xA , N = proc
+
+epss = [8,1]
+k = 0
+run = 10
+
+# Run vanilla ABC
+OUTP = House_van(DATA,epss,k,run)
+OUT = OUTP['OUTPUT']
+
+# Moment calculations
+meanG = OUT[:, 0].mean()
+sdG = np.std(OUT[:, 0])
+meanL = OUT[:, 1].mean()
+sdL = np.std(OUT[:,1])
+
+#transformed moments
+meanqG = np.exp(-OUT[:, 0]*xA/N).mean()
+sdqG = np.std(np.exp(-OUT[:, 0]*xA/N))
+meanqL = np.exp(-OUT[:,1]).mean()
+sdqL = np.std(np.exp(-OUT[:,1]))
+
+
+print('Summarized results',meanG,sdG,meanL,sdL)
+
+# Transformed parameters.
+print('Transformed parameters',meanqG,sdqG,meanqL,sdqL)
+
+print('simcount', OUTP['simcount'])
+
+tendC = time.time()
+print('running time is', tendC-tstartC)
 
