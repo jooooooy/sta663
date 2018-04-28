@@ -722,6 +722,7 @@ def abcSIR(obs_data, N, epsilon, prior_param, samples):
     return post_samples
 
 
+
 def abcSIR_binned(obs_data_binned, breaks_data, obs_duration, N, epsilon, prior_param, samples):
     
     # first retrieve the final size of the observed data
@@ -746,9 +747,9 @@ def abcSIR_binned(obs_data_binned, breaks_data, obs_duration, N, epsilon, prior_
         # simulate data
         sim_data = simSIR(N, beta, gamma)
         sim_duration = sim_data['T']
-        sim_data_binned = np.array(sum(sim.data['removal.times']<=breaks_data[1]))
-        for i in range(1,len(breaks_data)-1):
-            sim_data_binned = np.append(sim_data_binned, sum((breaks_data[i]<sim.data['removal.times']) & (sim.data['removal.times']<=breaks_data[i+1])))
+        sim_data_binned = np.array(sum(sim_data['removal.times']<=breaks_data[1]))
+        for j in range(1,len(breaks_data)-1):
+            sim_data_binned = np.append(sim_data_binned, sum((breaks_data[j]<sim_data['removal.times']) & (sim_data['removal.times']<=breaks_data[j+1])))
         
         #check if the final size matches the observedata
         d = np.sqrt( sum((obs_data_binned - sim_data_binned)**2) + ((obs_duration - sim_duration)/50)**2 )
@@ -756,7 +757,7 @@ def abcSIR_binned(obs_data_binned, breaks_data, obs_duration, N, epsilon, prior_
         if d < epsilon:
             i = i + 1
             print(i)
-            post_samples[i-1,] = np.array((beta,gamma))
+            post_samples[i-1,] = np.array((beta,gamma)).reshape((1,2))
          
     print(K)
     return post_samples
