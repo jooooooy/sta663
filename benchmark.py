@@ -1,4 +1,11 @@
 import time
+import numpy as np
+import math
+from scipy.stats import norm, gamma, poisson
+import operator
+import pandas as pd
+import sys
+from functools import reduce
 
 ########################################################################################
 # Code for implementing the Toni et al. alogrithm with predefined levels of
@@ -125,5 +132,98 @@ print('running time is', tendC-tstartC)
 #######################################################################################################################
 # Main code for partially coupled ABC for household epidemics
 #######################################################################################################################
+SeattleA = np.array([[15,12,4],[11,17,4],[0,21,4],[0,0,5]])
+tstartC = time.time()
+DATA=SeattleA
+proc = process(DATA)
+hsA, isA , colA, rowA,  xA , N = proc
 
+# Set thresholds
+#Eps1=c(100,70,50)
+#Eps2=c(10,6,4)
 
+Eps1= [20,12,8]
+Eps2= [3,2,1]
+
+TT=len(Eps1)
+EpsM= np.vstack((Eps1, Eps2)).T
+# Set infectious period (k) and  number of iterations (run)
+k=0
+run=10
+
+#
+# Set infectious period (k) and
+# number of iterations (run)
+#
+
+OUTP=PCOUP(DATA,EpsM[0,:],k,run)
+OUT = OUTP['OUTPUT']
+simT = OUTP['simcount']
+OL = np.zeros((OUT[:, 0].size,4))
+temp = OUT[:,2:5]
+OL[:,0:3] = temp
+OL[:,3]=np.exp(-OUT[:,2])-np.exp(-OUT[:,3])
+OL[:,3]=OL[:,3]/OL[:,3].sum()
+
+if TT > 1:
+    for t in range(1, TT):
+        OUTP = PCOUP_SMC(DATA,EpsM[t,:],k,run,OL)
+        OUT = OUTP['OUTPUT']
+        OL = np.zeros((OUT[:, 0].size, 4))
+        OL[:, 0:4] = OUT[:, 2:6]
+        OL[:, 3] = (np.exp(-OUT[:,2])-np.exp(-OUT[:,3]))*OL[:,3]
+        OL[:, 3] = OL[:, 3]/OL[:, 3].sum()
+        simT+=OUTP['simcount']
+ 
+# Compute posterior mean and standard deviation
+wei = 0
+moMG = np.repeat(0.0, 2)
+moML = np.repeat(0.0, 2)
+Count = OUT[:, 0].size
+
+for i in range(Count):
+    wei+=Mexp(0,1,0,OUT[i,2],OUT[i,3])*OUT[i,5]
+    for j in range(2):
+        moMG[j]=moMG[j]+Mexp(j,1,0,OUT[i,2],OUT[i,3])*OUT[i,5]
+        moML[j]=moML[j]+Mexp(0,1,0,OUT[i,2],OUT[i,3])*OUT[i,4]**(j+1)*OUT[i,5]
+        
+meanG = moMG[0]/wei
+sdG = math.sqrt(moMG[1]/wei-meanG**2)
+meanL = moML[0]/wei
+sdL = math.sqrt(moML[1]/wei-meanL**2)
+
+# Computes transformed means and standard deviations of
+# q_G = exp(-lambdaG * xA/N); q_L = exp(-lambdaL)
+#
+
+A1 = 1+xA/N
+A2 = 1+2*xA/N
+
+WEIq=(np.exp(-OUT[:,2])-np.exp(-OUT[:,3]))*OUT[:,5]
+moqG=[]
+moqG.append(sum((np.exp(-A1*OUT[:,2])-np.exp(-A1*OUT[:,3]))*OUT[:,5])/A1)
+moqG.append(sum((np.exp(-A2*OUT[:,2])-np.exp(-A2*OUT[:,3]))*OUT[:,5])/A2)
+
+moqL=[]
+moqL.append(sum(WEIq*np.exp(-OUT[:,4])))
+moqL.append(sum(WEIq*np.exp(-2*OUT[:,4])))
+
+meanqG = moqG[0]/wei
+sdqG = math.sqrt(moqG[0]/wei-meanqG**2)
+meanqL = moqL[0]/wei
+sdqL = math.sqrt(moqL[1]/wei-meanqL**2)
+
+# Summarise results
+print("Summarise results", simT)
+
+# Parameter means and sd
+print("Parameter means and sd", meanG, sdG, meanL, sdL)
+
+# Transformed parameters means and sd (compare with Clancy and O'Neill (2008)
+# and Neal (2012))
+print("Transformed parameters means and sd", meanqG, sdqG, meanqL, sdqL)
+
+# Time taken.
+
+tendC=time.time()
+tendC-tstartC
