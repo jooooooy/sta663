@@ -183,15 +183,15 @@ def sdC(MM):
 def PCOUP_SMC(Xdata, epss, k, run, OX):
     """ Code for running SMC-ABC for partially coupled household epidemics"""
     #initialize empty zero array
-    output = np.zeros(((2*epss[1]+1)*run, 6))
+    OUTPUT = np.zeros(((2*epss[1]+1)*run, 6), dtype = float)
     simcount=0
     count=0
     jj=0
     #Setting standard deviation for importance sampling
-    VL=np.sum(OX[:,2]^2*OX[:,3])-np.sum(OX[:,2]*OX[:,3])^2
-    sL=sqrt(2*VL)
+    VL = np.sum(OX[:,2]**2*OX[:,3])-np.sum(OX[:,2]*OX[:,3])**2
+    sL = math.sqrt(2*VL)
     # Number of samples stored from run acceptances.
-    cox = OX[:, 0].shape[0]
+    cox = OX[:, 0].size
     
     while jj<run:
         simcount+=1
@@ -200,15 +200,15 @@ def PCOUP_SMC(Xdata, epss, k, run, OX):
         if lambda_L>0:
             J=House_COUP(Xdata,epss[1],lambda_L,k) # Run coupled simulations
             W = J[J[:,3]<J[:, 4],:]# W contains successful simulations (infect close to xA individuals)
-            if W.shape[1] == 5:
-                W = np.array(W).reshape(1, 5)
-            if W[:,0].shape[0]>0:
-                if np.amin(W, axis = 0)[1] <=epss[0]:
+            if W.size == 5:
+                W = np.array(W).reshape((-1, 5))
+            if W[:,0].size>0:
+                if  min(W[:, 1])<=epss[0]:
                     jj+=1
-                    for ii in range(W[:,0].shape[0]):
+                    for ii in range(W[:,0].size):
                         if W[ii, 1]<=epss[0]:
                             count+=1
-                            OUTPUT[count-1,:] = reduce(operator.concat, [W[ii, 1:4], lambda_L, np.exp(-1*lambda_L)/norm.pdf(lambda_L, OX[:,2], sL)])
+                            OUTPUT[count-1,:] = np.r_[W[ii, 1:5], lambda_L, np.exp(-lambda_L)/sum(norm.pdf(lambda_L, OX[:,2], sL))]
             
         
     return {'OUTPUT':OUTPUT[0:count,:], 'simcount':simcount}
