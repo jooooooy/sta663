@@ -603,7 +603,7 @@ def House_van(Xdata,epsil,k,run):
                 OUTPUT[j-1,] = np.array([lambda_G,lambda_L]).reshape((1,2))
                 print(j,simcount)
                 
-    return {'OUTPUT': OUTPUT, 'simcount' : simcount}     
+    return {'OUTPUT': OUTPUT, 'simcount' : simcount}
 
 def House_epi(n,k,lambda_L):
     
@@ -628,12 +628,12 @@ def House_epi(n,k,lambda_L):
         i = 0
         test = 0
         while test == 0:
-            i += 1
+            i = i + 1
             if t[i-1] > (lambda_L*np.sum(q[0:i])):
                 test = 1 
                 sev = np.sum(q[0:i])
                 
-    return i, sev
+    return np.array([i,sev])
 # Code for setting (local) thresholds in a household of size n.
 # 
 # Note local thresholds not required for households of size 1.
@@ -644,7 +644,210 @@ def thresH(n):
     thres = np.repeat(0.0,n-1)
     thres[0] = np.random.exponential(size=1,scale=1/(n-1))
     if n > 2:
-        for i in range(1,n-1):
-            thres[i] = thres[i-1] + np.random.exponential(size=1, scale=1/(n-i))
+        for i in range(2,n):
+            thres[i-1] = thres[i-2] + np.random.exponential(size=1, scale=1/(n-i))
     
     return thres
+
+def simSIR(N, beta, gamma):
+    # initial number of infectives and susceptibles;
+    I = 1
+    S = N-1
+    
+    # recording time;
+    t = 0
+    times = np.array(0)
+    
+    # a vector which records the type of event (1=infection, 2=removal)
+    type = np.array(1)
+    
+    while I > 0:
+        
+        # time to next event;
+        t = t + np.random.exponential(size=1,scale= 1/((beta/N)*I*S + gamma*I)) 
+        times = np.append(times, t)
+
+        if np.random.uniform(size=1) < beta*S/(beta*S + N*gamma):
+            # infection
+            I = I+1
+            S = S-1
+            type = np.append(type,1)
+        else:
+            #removal
+            I = I-1
+            type = np.append(type,2)
+
+    return {'removal.times': times[type == 2] - min(times[type == 2]),
+           'final.size' : N-S,
+           'T' : times[times.size-1] }
+
+
+def simSIR_constrained(N, beta, gamma, final_size):
+    check = 0
+    while check == 0:
+        out = simSIR(N,beta,gamma)
+        if out['final.size'] >= final_size:
+            res = out['removal.times']
+            check = 1
+    
+    return res
+
+
+def abcSIR(obs_data, N, epsilon, prior_param, samples):
+    
+    # first retrieve the final size of the observed data
+    final_size_obs = obs_data.size
+    
+    # matrix to store the posterior samples
+    post_samples = np.nan * np.zeros((samples,2))
+    
+    i = 0
+    while i < samples:
+        
+        # draw from the prior distribution
+        beta = np.random.exponential(size = 1, scale = 1/prior_param[0])   
+        gamma = np.random.exponential(size = 1, scale = 1/prior_param[1]) 
+        
+        # simulate data
+        sim_data = simSIR(N, beta, gamma)
+      
+        #check if the final size matches the observedata
+        if sim_data['final.size'] == final_size_obs:
+            d = sum((obs_data - sim_data['removal.times'])**2)
+            
+            if d < epsilon:
+                i = i+1
+                post_samples[i-1,] = np.array((beta,gamma))
+    
+    return post_samples
+
+
+def abcSIR_binned(obs_data_binned, breaks_data, obs_duration, N, epsilon, prior_param, samples):
+    
+    # first retrieve the final size of the observed data
+    final_size_obs = obs_data_binned.size
+    
+    # matrix to store the posterior samples
+    post_samples = np.nan * np.zeros((samples,2))
+
+    K = 0
+   
+    i = 0
+    
+    while i < samples:
+        
+        # counter
+        K = K + 1
+        
+        # draw from the prior distribution
+        beta = np.random.exponential(size = 1, scale = 1/prior_param[0])   
+        gamma = np.random.exponential(size = 1, scale = 1/prior_param[1]) 
+        
+        # simulate data
+        sim_data = simSIR(N, beta, gamma)
+        sim_duration = sim_data['T']
+        sim_data_binned = np.array(sum(sim.data['removal.times']<=breaks_data[1]))
+        for i in range(1,len(breaks_data)-1):
+            sim_data_binned = np.append(sim_data_binned, sum((breaks_data[i]<sim.data['removal.times']) & (sim.data['removal.times']<=breaks_data[i+1])))
+        
+        #check if the final size matches the observedata
+        d = np.sqrt( sum((obs_data_binned - sim_data_binned)**2) + ((obs_duration - sim_duration)/50)**2 )
+        
+        if d < epsilon:
+            i = i + 1
+            print(i)
+            post_samples[i-1,] = np.array((beta,gamma))
+         
+    print(K)
+    return post_samples
+
+
+
+
+def simSIR_discrete(N, Lambda, gamma, T):
+    
+    # change the rate to avoidance probability
+    q = np.exp(-Lambda/N)
+    
+    # initialisation
+    t_vec = np.arange(1,T+1)
+    
+    It_vec = np.repeat(np.nan, T)   
+    St_vec = np.repeat(np.nan, T) 
+    Rt_vec = np.repeat(np.nan, T) 
+    
+    It_vec[0] = 1
+    St_vec[0] = N - 1
+    Rt_vec[0] = 0
+    
+    # sample infectious period for the initially infective individual
+    inf_per = np.random.geometric(p=gamma, size=1) + 1; 
+   
+    # Yt.vec keeps track of the number of people being removed on each day
+    Yt_vec = np.repeat(0, T)
+   
+    # assing the value to Yt which corresponds to when the initially infective individual gets removed
+    Yt_vec[inf_per + 1] = Yt_vec[inf_per + 1] + 1  
+    
+    t = 1
+    while t < T:
+        
+        t = t + 1
+        # simulate the number of new infections for next day t
+        
+        if It_vec[t-2] > 0:
+            
+            new_inf = np.random.binomial(size = 1, n = St_vec[t-1], p = 1-q**It.vec[t-1])
+            St_vec[t-1] = St_vec[t-2] - new_inf
+            It_vec[t-1] = It_vec[t-2] + new_inf - Yt_vec[t-1] 
+            
+            if new_inf > 0:
+                for j in range(1,new_inf+1):
+                    inf_per = np.random.geometric(p=gamma, size=1) + 1
+                    loc = min(t+0+inf_per, T)
+                    Yt_vec[loc-1] = Yt_vec[loc-1] +1
+                   
+        else:
+            It_vec[t-1] = It_vec[t-2]
+            St_vec[t-1] = St_vec[t-2]
+    
+    Rt_vec = np.cumsum(Yt_vec)
+    res = np.r_[It_vec, St_vec, Rt_vec, Yt_vec]
+
+    if (sum(np.sum(res[0:res.shape[1],],axis=0) - np.repeat(N, repeats= T))!=0):
+        break 
+   
+    return {"pop" : res, "final.size" : sum(res[3,])} 
+
+
+
+
+def abcSIR_discrete(obs_data, N, T, epsilon, prior_param, samples):
+    
+    # first retrieve the final size of the observed data
+    final_size_obs = obs_data.size
+    
+    # matrix to store the posterior samples
+    post_samples = np.nan * np.zeros((samples,2))
+    
+    i = 0
+    
+    while i < samples:
+        
+        Lambda = np.random.exponential(scale=1/prior_param[0], size=1)
+        gamma = np.random.uniform(size = 1)
+        
+        # simulate data
+        sim_data = simSIR_discrete(N, Lambda, gamma, T)
+        
+        # get start/end dates
+        start_date = min(np.where(sim_data['pop'][3,] == 1)) +1   min(which(sim_data['pop'][3,] == 1)) 
+        end_date = start_date + len_out - 1
+        
+        d = sum((obs_data - sim_data['pop'][3, ][np.arange(start_date-1,end_date)])**2)
+        
+        if d < epsilon:
+            i = i+1
+            post_samples[i-1,] = np.array((Lambda, gamma))
+            
+        return post_samples
