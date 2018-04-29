@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import scipy
 from scipy.stats import norm, gamma, poisson
 
@@ -82,7 +81,7 @@ def ABCimp(N, mstar, epsil, run, sampold, weightold):
     # sampold and weightold are the lambda values and importance weight from the
     # previous run.
     V=np.sum(sampold**2*weightold)/np.sum(weightold)-np.sum(sampold*weightold)**2/np.sum(weightold)**2
-    ss=math.sqrt(2*V)
+    ss=np.sqrt(2*V)
     while i<run:
         simcount+=1
         ll = np.random.choice(sampold, 1, p = weightold/weightold.sum(), replace = True)
@@ -113,7 +112,7 @@ def SIR_sim(N, Lambda, k):
         #draw possion distribution    
         Z = np.random.poisson(Lambda*I, 1)
         if Z>0:
-            for j in range(math.floor(Z)):
+            for j in range(np.floor(Z)):
                 u = np.random.uniform(0, 1, 1)
                 if u<(S/N):
                     S-=1
@@ -187,7 +186,7 @@ def PCOUP_SMC(Xdata, epss, k, run, OX):
     jj=0
     #Setting standard deviation for importance sampling
     VL = np.sum(OX[:,2]**2*OX[:,3])-np.sum(OX[:,2]*OX[:,3])**2
-    sL = math.sqrt(2*VL)
+    sL = np.sqrt(2*VL)
     # Number of samples stored from run acceptances.
     cox = OX[:, 0].size
     
@@ -245,9 +244,9 @@ def PCOUP(Xdata, epss, k, run):
 def Mexp(k,Lambda,U,a,b):
     """Moment calculator for Exp(\lambda) prior."""
     if k == 0:
-        U+=math.exp(-a*Lambda)-math.exp(-Lambda*b)
+        U+=np.exp(-a*Lambda)-np.exp(-Lambda*b)
     if k>0:
-        U+=a**k*math.exp(-Lambda*a)-b**k*math.exp(-Lambda*b)+k/Lambda*Mexp((k-1), Lambda, U, a, b)
+        U+=a**k*np.exp(-Lambda*a)-b**k*np.exp(-Lambda*b)+k/Lambda*Mexp((k-1), Lambda, U, a, b)
         
     return U
 
@@ -268,8 +267,8 @@ def House_imp(Xdata,epsil,k,run,OX):
     vLG = np.sum(OX[:,0]*OX[:,1]*OX[:,2])/np.sum(OX[:,2]) - meanG*meanL
     vaR = 2*np.array([vG, vLG, vLG, vL]).reshape((2,2)).T
     Sinv = np.linalg.inv(vaR)
-    sG = math.sqrt(2*vG)
-    sLL = math.sqrt(vL-vLG**2/vG)
+    sG = np.sqrt(2*vG)
+    sLL = np.sqrt(vL-vLG**2/vG)
     sAL = vLG/vG
     
     while j<run:
@@ -287,7 +286,7 @@ def House_imp(Xdata,epsil,k,run,OX):
                     xDIF = np.array([lambda_G, lambda_L])-OX[LA-1, 0:2]
                     mult = xDIF.T @ Sinv @ xDIF
                     weiZ+=np.exp(-mult[0, 0]/2)
-            weiG = math.exp(-1*(lambda_L+lambda_G))/weiZ
+            weiG = np.exp(-1*(lambda_L+lambda_G))/weiZ
             OUTPUT[j-1,:] = [lambda_G,lambda_L,weiG]
     
     return {'OUTPUT':OUTPUT, 'simcount':simcount}

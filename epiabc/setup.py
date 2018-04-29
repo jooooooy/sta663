@@ -7,6 +7,6 @@ setup(name='epiabc',
       author='ajjy',
       author_email='jingyi.linxmu@gmail.com',
       license='STA663',
-      install_requires=['numpy','scipy','math'],
+      install_requires=['numpy','scipy'],
       packages=['epiabc'],
       zip_safe=False)
