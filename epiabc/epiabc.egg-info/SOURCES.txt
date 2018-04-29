@@ -1,0 +1,11 @@
+setup.py
+epiabc/__init__.py
+epiabc/bernSIR.py
+epiabc/gastro.py
+epiabc/homoSIRF.py
+epiabc.egg-info/PKG-INFO
+epiabc.egg-info/SOURCES.txt
+epiabc.egg-info/dependency_links.txt
+epiabc.egg-info/not-zip-safe
+epiabc.egg-info/requires.txt
+epiabc.egg-info/top_level.txt
