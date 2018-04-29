@@ -707,7 +707,7 @@ def simSIR_discrete(N, Lambda, gamma, T):
     res = np.r_[It_vec, St_vec, Rt_vec, Yt_vec]
 
     if (sum(np.sum(res[0:res.shape[1],],axis=0) - np.repeat(N, repeats= T))!=0):
-        break 
+    	return('error') 
    
     return {"pop" : res, "final.size" : sum(res[3,])} 
 

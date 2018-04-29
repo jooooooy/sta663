@@ -1,3 +1,4 @@
+MANIFEST.in
 setup.py
 epiabc/__init__.py
 epiabc/bernSIR.py
@@ -9,3 +10,5 @@ epiabc.egg-info/dependency_links.txt
 epiabc.egg-info/not-zip-safe
 epiabc.egg-info/requires.txt
 epiabc.egg-info/top_level.txt
+epiabc/data/SeattleA.dat
+epiabc/data/Tecumseh1.dat

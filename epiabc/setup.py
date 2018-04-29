@@ -9,4 +9,7 @@ setup(name='epiabc',
       license='STA663',
       install_requires=['numpy','scipy'],
       packages=['epiabc'],
+      package_data  = {
+        "epiabc": ["*.dat"], # or "canbeAny": ["dataset/*.data"]
+    },
       zip_safe=False)
