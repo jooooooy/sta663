@@ -842,7 +842,7 @@ def abcSIR_discrete(obs_data, N, T, epsilon, prior_param, samples):
         sim_data = simSIR_discrete(N, Lambda, gamma, T)
         
         # get start/end dates
-        start_date = min(np.where(sim_data['pop'][3,] == 1)) +1   min(which(sim_data['pop'][3,] == 1)) 
+        start_date = min(np.where(sim_data['pop'][3,] == 1)) 
         end_date = start_date + len_out - 1
         
         d = sum((obs_data - sim_data['pop'][3, ][np.arange(start_date-1,end_date)])**2)
