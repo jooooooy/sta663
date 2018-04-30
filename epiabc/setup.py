@@ -7,7 +7,7 @@ setup(name='epiabc',
       author='ajjy',
       author_email='jingyi.linxmu@gmail.com',
       license='STA663',
-      install_requires=['numpy','scipy'],
+      install_requires=['numpy','scipy', 'numba'],
       packages=['epiabc'],
       package_data  = {
         "epiabc": ["*.dat"], # or "canbeAny": ["dataset/*.data"]
