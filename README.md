@@ -11,3 +11,7 @@ Then set the file of sta663/epiabc as working directory
 ```console
 aijing@aijing-X555LAB:~$ cd sta663/epiabc
 ```
+Install epiabc package by the following command line:
+```console
+aijing@aijing-X555LAB:~/sta663/epiabc$ sudo pip install -e . 
+```
