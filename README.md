@@ -7,4 +7,7 @@ This repository collects python codes, which are compiled as a python package na
 ```console
 aijing@aijing-X555LAB:~$ git clone https://github.com/jooooooy/sta663.git
 ```
-Then set the file of sta663 as working directory
+Then set the file of sta663/epiabc as working directory
+```console
+aijing@aijing-X555LAB:~$ cd sta663/epiabc
+```
